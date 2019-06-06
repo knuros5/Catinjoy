@@ -1,5 +1,5 @@
 # Catinjoy
-###- mobile robot programming project
+### - mobile robot programming project
 
 ---------------------
 
@@ -8,7 +8,7 @@
 #### b) oh oh body shaking : LeeYunMin
 #### c) hey ho swing the stick : KangMinJung
 #### d) GuawnJongRobot's snack throwing : BaeKyunRyoung
-####### I don't know spelling!! >q<
+###### I don't know spelling!! >q<
 
 ---------------------
 
