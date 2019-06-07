@@ -150,13 +150,11 @@ add_executable(automove src/automove.cpp)
 add_dependencies(automove knu_ros_lecture_generate_messages_cpp)
 
 
-
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(automove ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-
 
 
 #############
