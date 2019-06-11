@@ -380,8 +380,6 @@ int main(int argc, char **argv)
 			baseCmd.angular.z = 0;
 			obstacle_flag = true;			
 		}
-
-
 		pubTeleop.publish(baseCmd);
 		
 		double deg = 0;
@@ -393,8 +391,6 @@ int main(int argc, char **argv)
 				tf::Transform currentTransformation = getCurrentTransformation();
 
 				tf::Quaternion t = currentTransformation.getRotation();
-				printf("###MAIN :: %lf %lf %lf %lf\n", t[0],t[1],t[2],t[3]);
-				exit(0);
 				doRotation(pubTeleop, currentTransformation, deg, 0.25);
 
 				currentTransformation = getCurrentTransformation();
