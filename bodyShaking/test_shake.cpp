@@ -74,9 +74,6 @@ bool doRotation(ros::Publisher &pubTeleop, tf::Transform &initialTransformation,
 	baseCmd.linear.x = 0.0;
 	baseCmd.linear.y = 0.0;
 
-	double dRotation_r = -2 * dRotation;
-	double dRotation_rr = dRotation;
-
 	if(dRotation < 0.) {
 		baseCmd.angular.z = -dRotationSpeed;
 	} else {
@@ -88,99 +85,31 @@ bool doRotation(ros::Publisher &pubTeleop, tf::Transform &initialTransformation,
 	ros::Rate loopRate(1000.0);
 
 
-	for(int i=0; i<3; i++){
+	while(ros::ok() && !bDone) {
+		// Get callback messages
+		ros::spinOnce();
 
-		if(i == 1){
-			if(dRotation_r < 0.) {
-				baseCmd.angular.z = -dRotationSpeed;
-			} else {
-				baseCmd.angular.z = dRotationSpeed;
-			}
-		}
-		else if(i == 2){
-			if(dRotation_rr < 0.) {
-				baseCmd.angular.z = -dRotationSpeed;
-			} else {
-				baseCmd.angular.z = dRotationSpeed;
-			}
+		// get current transformation
+		tf::Transform currentTransformation = getCurrentTransformation();
 
-		}
-		bDone = false;
-		while(ros::ok() && !bDone) {
-			// Get callback messages
-			ros::spinOnce();
+		//see how far we've traveled
+		tf::Transform relativeTransformation = initialTransformation.inverse() * currentTransformation ;
+		tf::Quaternion rotationQuat = relativeTransformation.getRotation();
 
-			// get current transformation
-			tf::Transform currentTransformation = getCurrentTransformation();
+		double dAngleTurned = atan2((2 * rotationQuat[2] * rotationQuat[3]) , (1-(2 * (rotationQuat[2] * rotationQuat[2]) ) ));
 
-			//see how far we've traveled
-			tf::Transform relativeTransformation = initialTransformation.inverse() * currentTransformation ;
-			tf::Quaternion rotationQuat = relativeTransformation.getRotation();
-
-			double dAngleTurned = atan2((2 * rotationQuat[2] * rotationQuat[3]) , (1-(2 * (rotationQuat[2] * rotationQuat[2]) ) ));
-
-			
-			if(i == 1){
-				// Check termination condition
-				if( fabs(dAngleTurned) > fabs(dRotation_r) || (dRotation_r == 0)) 
-				{
-					printf("i = %d\n", i);
-					bDone = true;
-					baseCmd.linear.x = 0.0;
-					baseCmd.linear.y = 0.0;
-					baseCmd.angular.z = 0.0;
-					pubTeleop.publish(baseCmd);
-					break;
-				} else {
-					printf("i = %d\n", i);
-					//send the drive command
-					pubTeleop.publish(baseCmd);
-					// sleep!
-					loopRate.sleep();
-				}
-			}
-			else if (i == 0){
-			// Check termination condition
-				if( fabs(dAngleTurned) > fabs(dRotation) || (dRotation == 0)) 
-				{
-					printf("i = %d\n", i);
-					bDone = true;
-					baseCmd.linear.x = 0.0;
-					baseCmd.linear.y = 0.0;
-					baseCmd.angular.z = 0.0;
-					pubTeleop.publish(baseCmd);
-					break;
-				} else {
-					printf("i = %d\n", i);
-					//send the drive command
-					pubTeleop.publish(baseCmd);
-					// sleep!
-					loopRate.sleep();
-				}
-			}
-			else if (i == 2){
-			// Check termination condition
-				if( fabs(dAngleTurned) > fabs(dRotation_rr) || (dRotation_rr == 0)) 
-				{	printf("if i = %d\n", i);
-					bDone = true;
-					baseCmd.linear.x = 0.0;
-					baseCmd.linear.y = 0.0;
-					baseCmd.angular.z = 0.0;
-					pubTeleop.publish(baseCmd);
-					break;
-				} else {
-					printf("else i = %d\n", i);
-					//send the drive command
-					pubTeleop.publish(baseCmd);
-					// sleep!
-					loopRate.sleep();
-				}
-			}
-			
-		}
+		// Check termination condition
+		if(fabs(dAngleTurned) > fabs(dRotation) || (dRotation == 0)) 
+		{
+			bDone = true;
+			break;
+		} else {
+			pubTeleop.publish(baseCmd);
+			// sleep!
+			loopRate.sleep();
+		}		
 	}
-
-
+	
 	// Initialization
 	baseCmd.linear.x = 0.0;
 	baseCmd.linear.y = 0.0;
@@ -460,8 +389,21 @@ int main(int argc, char **argv)
 			printf("####### rotate! #######\n");
                         deg = ROTDEGREE;
 
-			tf::Transform currentTransformation = getCurrentTransformation();
-			doRotation(pubTeleop, currentTransformation, deg, 0.25);
+			for(int i=0; i<3; i++){
+				tf::Transform currentTransformation = getCurrentTransformation();
+
+				tf::Quaternion t = currentTransformation.getRotation();
+				printf("###MAIN :: %lf %lf %lf %lf\n", t[0],t[1],t[2],t[3]);
+				exit(0);
+				doRotation(pubTeleop, currentTransformation, deg, 0.25);
+
+				currentTransformation = getCurrentTransformation();
+				doRotation(pubTeleop, currentTransformation, -2 * deg, 0.25);
+
+				currentTransformation = getCurrentTransformation();
+				doRotation(pubTeleop, currentTransformation, deg, 0.25);
+			}
+
 			obstacle_flag = false;
 			
 			baseCmd.linear.x = 0;
