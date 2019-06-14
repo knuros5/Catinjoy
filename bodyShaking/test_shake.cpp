@@ -119,7 +119,31 @@ bool doRotation(ros::Publisher &pubTeleop, tf::Transform &initialTransformation,
 	return bDone;
 }
 
+bool shakeBody(ros::Publisher &pubTeleop, double dRotation, double dRotationSpeed){
 
+	geometry_msgs::Twist baseCmd;
+
+	for(int i=0; i<3; i++){
+		tf::Transform currentTransformation = getCurrentTransformation();
+
+		tf::Quaternion t = currentTransformation.getRotation();
+		doRotation(pubTeleop, currentTransformation, dRotation, dRotationSpeed);
+
+		currentTransformation = getCurrentTransformation();
+		doRotation(pubTeleop, currentTransformation, -2 * dRotation, dRotationSpeed);
+
+		currentTransformation = getCurrentTransformation();
+		doRotation(pubTeleop, currentTransformation, dRotation, dRotationSpeed);
+	}
+
+			
+	baseCmd.linear.x = 0;
+	baseCmd.linear.y = 0;
+	baseCmd.angular.z = 0;
+	pubTeleop.publish(baseCmd);
+
+	return false;
+}
 
 	void
 convertOdom2XYZRPY(nav_msgs::Odometry &odom, Vec3d &xyz, Vec3d &rpy)
@@ -387,27 +411,9 @@ int main(int argc, char **argv)
 			printf("####### rotate! #######\n");
                         deg = ROTDEGREE;
 
-			for(int i=0; i<3; i++){
-				tf::Transform currentTransformation = getCurrentTransformation();
-
-				tf::Quaternion t = currentTransformation.getRotation();
-				doRotation(pubTeleop, currentTransformation, deg, 0.25);
-
-				currentTransformation = getCurrentTransformation();
-				doRotation(pubTeleop, currentTransformation, -2 * deg, 0.25);
-
-				currentTransformation = getCurrentTransformation();
-				doRotation(pubTeleop, currentTransformation, deg, 0.25);
-			}
-
-			obstacle_flag = false;
-			
-			baseCmd.linear.x = 0;
-			baseCmd.linear.y = 0;
-			baseCmd.angular.z = 0;
-			pubTeleop.publish(baseCmd);
+			obstacle_flag = shakeBody(pubTeleop, deg, 0.3);
+			break;
 		}
-
 
 		/* 5. Wait for key to termination */
 		int nKey = waitKey(30) % 255;
