@@ -119,7 +119,7 @@ bool doRotation(ros::Publisher &pubTeleop, tf::Transform &initialTransformation,
 	return bDone;
 }
 
-bool shakeBody(ros::Publisher &pubTeleop, double dRotation, double dRotationSpeed){
+void shakeBody(ros::Publisher &pubTeleop, double dRotation, double dRotationSpeed){
 
 	geometry_msgs::Twist baseCmd;
 
@@ -142,7 +142,6 @@ bool shakeBody(ros::Publisher &pubTeleop, double dRotation, double dRotationSpee
 	baseCmd.angular.z = 0;
 	pubTeleop.publish(baseCmd);
 
-	return false;
 }
 
 	void
@@ -411,7 +410,8 @@ int main(int argc, char **argv)
 			printf("####### rotate! #######\n");
                         deg = ROTDEGREE;
 
-			obstacle_flag = shakeBody(pubTeleop, deg, 0.3);
+			shakeBody(pubTeleop, deg, 0.3);
+			obstacle_flag = false;
 			break;
 		}
 
