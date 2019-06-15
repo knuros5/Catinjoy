@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 
 # coding: utf-8
 
@@ -9,28 +9,30 @@
 
 # In[2]:
 
-
+import rospy
 import numpy as np
 import cv2 
-
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import yaml
 from time import sleep
-
-import rospy
 from std_msgs.msg import String
-import random
 
-def servo_talker():
-	pub = rospy.Publisher('servo_motion', String, queue_size=10)
-	rospy.init_node('talker', anonymous = True)
+#rospy.init_node('cat_face_detection')
+#pub = rospy.Publisher('detect',String,queue_size=1)
+detectCount = 0
+
+def cat_detector():
+	global detectCount
+	pub = rospy.Publisher('detect', String, queue_size=10)
+	rospy.init_node('cat_face_detector', anonymous = True)
 	rate = rospy.Rate(10)
-	flag = random.randrange(1,3)
-	#flag 1 is wiggle, flag 2 is servo cat toy
-	sflag = "%s"%flag
-	pub.publish(sflag)
+	msg = "cat detected "+ str(detectCount) + "!!!"
+	pub.publish(msg)
+	print("-----publish msg : cat detected!!!\n")
+	detectCount = detectCount + 1
 	rate.sleep()
-	
+
 
 # ### Download haarcascade xml files from https://github.com/opencv/opencv/tree/master/data/haarcascades
 # 
@@ -59,6 +61,7 @@ isCat=False
 IMAGE_DIR = '/home/sunny/Desktop/image/'
 TEXTFILENAME = "/home/sunny/catkin_ws/src/cat_face_detection/src/detected_index.txt"
 DETECTED_IMAGE_DIR = '/home/sunny/Desktop/detect_image/'
+
 
 
 # #### For each image 
@@ -102,13 +105,20 @@ def processImage(image_dir,image_filename):
 		isCat = True
 		#print("green rectangle FINISH")
 	
+	# when cat detected!!!
+	count = 0;
 	if isCat:
 		detect_image_file_name = 'detect_'+image_filename
 
 		# mark cat image index in textfile
 		f.write(detect_image_file_name+'\n')
-		print('**********DETECT CAT!!!**********\n')
-		servo_talker()
+		print('********** CAT DETECTED!!! **********\n')
+
+		# publish detection message
+		cat_detector()
+		#msg = "cat detected!!"
+		#pub.publish(msg)
+
 		# save the image to a file		
 		cv2.imwrite(DETECTED_IMAGE_DIR+detect_image_file_name,img)
 	
@@ -116,6 +126,11 @@ def processImage(image_dir,image_filename):
 		#img = mpimg.imread(DETECTED_IMAGE_DIR+detect_image_file_name)
 		#plt.imshow(img)
 		#plt.show()
+
+	
+	nKey = cv2.waitKey(30)%255
+	if nKey == 27:
+		exit()
 	#print("isCat if phrase FINISH")
 	isCat = False
 
@@ -126,22 +141,36 @@ def processImage(image_dir,image_filename):
 # In[6]:
 
 idx = 100
-while idx < 700:
-	print(IMAGE_DIR+'left0'+str(idx)+'.jpg')
+#rate = rospy.Rate(10)
+#while not rospy.is_shutdown():
+while idx < 9990:
+	# set file name
+	if idx <= 999:
+		filename = 'left0'+str(idx)+'.jpg'
+	else:
+		filename = 'left'+str(idx)+'.jpg'
+	print(IMAGE_DIR+filename)
+	
+	# open image file
 	try:
-		f1 = open(IMAGE_DIR+'left0'+str(idx)+'.jpg','r')
-	except FileNotFoundError as e:
+		f1 = open(IMAGE_DIR+filename,'r')
+	except IOError as e:
 		print(e)
-		idx = idx - 10
+		idx = idx - 5
 
+	# process image file
 	try:
-		processImage(IMAGE_DIR,'left0'+str(idx)+'.jpg')
+		processImage(IMAGE_DIR,filename)
 	except Exception as e:
 		print(e)
 		sleep(2)
-		idx = idx - 10
+
+	idx = idx + 5
+	if idx > 900:
+		break
 	
-	idx += 5
+
+	# end of while
 
 
 f.close()
